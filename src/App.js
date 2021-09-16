@@ -30,7 +30,10 @@ export default function App() {
     clientId: `452890721843-bvp31s2cq988jsiu9mlh83elp7cs8s1u.apps.googleusercontent.com`,
     isSignedIn: false,
     accessType: "offline",
-    // scope: ''
+    discoveryDocs: [
+      "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
+    ],
+    scope: "https://www.googleapis.com/auth/calendar.readonly",
     // responseType: "code",
     // prompt: "consent",
   });
