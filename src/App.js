@@ -6,7 +6,7 @@ export default function App() {
   const fetchData = useCallback(async () => {
     try {
       const { data } = await axios.get(
-        "https://www.googleapis.com/calendar/v3"
+        "https://www.googleapis.com/calendar/v3/users/me/calendarList"
       );
       console.log(data);
     } catch (e) {}
@@ -29,7 +29,7 @@ export default function App() {
     onFailure,
     clientId: `452890721843-bvp31s2cq988jsiu9mlh83elp7cs8s1u.apps.googleusercontent.com`,
     isSignedIn: false,
-    accessType: "offline"
+    accessType: "offline",
     // scope: ''
     // responseType: "code",
     // prompt: "consent",
