@@ -18,6 +18,20 @@ export default function App() {
       setData(data);
     } catch (e) {}
   }, []);
+  const fetchCalendarData = useCallback(async (accessToken) => {
+    try {
+      const { data } = await axios.get(
+        "https://www.googleapis.com/calendar/v3/calendars/primary",
+        {
+          headers: {
+            Authorization: "Bearer " + accessToken,
+          },
+        }
+      );
+      console.log(data);
+      setData(data);
+    } catch (e) {}
+  }, []);
 
   // useEffect(() => {
   //   fetchData();
@@ -26,6 +40,7 @@ export default function App() {
   const onSuccess = (param) => {
     console.log("success", param);
     fetchData(param.accessToken);
+    fetchCalendarData(param.accessToken);
   };
 
   const onFailure = (param) => {
@@ -45,8 +60,7 @@ export default function App() {
     // hostedDomain: "https://gmeet-all.vercel.app",
     // responseType: "permission id_token",
     // redirectUri: "storagerelay://https/gmeet-all.vercel.app?id=auth433992",
-    // scope:
-    //   "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid https://www.googleapis.com/auth/calendar.readonly",
+    scope: "https://www.googleapis.com/auth/calendar.readonly",
     // responseType: "code",
     // prompt: "consent",
   });
