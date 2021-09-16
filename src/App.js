@@ -38,15 +38,15 @@ export default function App() {
     clientId: `452890721843-bvp31s2cq988jsiu9mlh83elp7cs8s1u.apps.googleusercontent.com`,
     isSignedIn: false,
     accessType: "online",
-    discoveryDocs: [
-      "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
-    ],
-    fetchBasicProfile: true,
-    hostedDomain: "https://gmeet-all.vercel.app",
-    responseType: "permission id_token",
-    redirectUri: "storagerelay://https/gmeet-all.vercel.app?id=auth433992",
-    scope:
-      "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid https://www.googleapis.com/auth/calendar.readonly",
+    // discoveryDocs: [
+    //   "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
+    // ],
+    // fetchBasicProfile: true,
+    // hostedDomain: "https://gmeet-all.vercel.app",
+    // responseType: "permission id_token",
+    // redirectUri: "storagerelay://https/gmeet-all.vercel.app?id=auth433992",
+    // scope:
+    //   "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid https://www.googleapis.com/auth/calendar.readonly",
     // responseType: "code",
     // prompt: "consent",
   });
