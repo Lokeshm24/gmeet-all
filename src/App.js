@@ -3,21 +3,27 @@ import { useGoogleLogin, useGoogleLogout } from "react-google-login";
 import { useCallback, useEffect } from "react";
 
 export default function App() {
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (accessToken) => {
     try {
       const { data } = await axios.get(
-        "https://www.googleapis.com/calendar/v3/users/me/calendarList"
+        "https://www.googleapis.com/calendar/v3/users/me/calendarList",
+        {
+          headers: {
+            Authorization: "Bearer " + accessToken,
+          },
+        }
       );
       console.log(data);
     } catch (e) {}
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  // useEffect(() => {
+  //   fetchData();
+  // }, [fetchData]);
 
   const onSuccess = (param) => {
     console.log("success", param);
+    fetchData(param.accessToken);
   };
 
   const onFailure = (param) => {
