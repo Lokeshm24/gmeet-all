@@ -1,8 +1,9 @@
 import axios from "axios";
 import { useGoogleLogin, useGoogleLogout } from "react-google-login";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function App() {
+  const [data, setData] = useState({});
   const fetchData = useCallback(async (accessToken) => {
     try {
       const { data } = await axios.get(
@@ -14,6 +15,7 @@ export default function App() {
         }
       );
       console.log(data);
+      setData(data);
     } catch (e) {}
   }, []);
 
@@ -43,12 +45,8 @@ export default function App() {
     hostedDomain: "https://gmeet-all.vercel.app",
     responseType: "permission id_token",
     redirectUri: "storagerelay://https/gmeet-all.vercel.app?id=auth433992",
-    scope: [
-      "https://www.googleapis.com/auth/userinfo.email",
-      "https://www.googleapis.com/auth/userinfo.profile",
-      "openid",
-      "https://www.googleapis.com/auth/calendar.readonly",
-    ],
+    scope:
+      "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid https://www.googleapis.com/auth/calendar.readonly",
     // responseType: "code",
     // prompt: "consent",
   });
@@ -87,6 +85,7 @@ export default function App() {
     <div className="App">
       <h1>Hello CodeSandbox</h1>
       <button onClick={signIn}>Google</button>
+      {JSON.stringify(data, null, 2)}
     </div>
   );
 }
