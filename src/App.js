@@ -21,7 +21,7 @@ export default function App() {
   const fetchCalendarData = useCallback(async (accessToken) => {
     try {
       const { data } = await axios.get(
-        "https://www.googleapis.com/calendar/v3/calendars/primary",
+        "https://www.googleapis.com/calendar/v3/calendars/primary/events",
         {
           headers: {
             Authorization: "Bearer " + accessToken,
@@ -60,7 +60,7 @@ export default function App() {
     // hostedDomain: "https://gmeet-all.vercel.app",
     // responseType: "permission id_token",
     // redirectUri: "storagerelay://https/gmeet-all.vercel.app?id=auth433992",
-    scope: "https://www.googleapis.com/auth/calendar.readonly",
+    scope: "https://www.googleapis.com/auth/calendar",
     // responseType: "code",
     // prompt: "consent",
   });
@@ -99,7 +99,7 @@ export default function App() {
     <div className="App">
       <h1>Hello CodeSandbox</h1>
       <button onClick={signIn}>Google</button>
-      {JSON.stringify(data, null, 2)}
+      <p>{JSON.stringify(data, null, 2)}</p>
     </div>
   );
 }
