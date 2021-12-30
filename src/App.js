@@ -1,26 +1,28 @@
 import axios from "axios";
 import { useGoogleLogin, useGoogleLogout } from "react-google-login";
 import { useCallback, useEffect, useState } from "react";
-import { addDays, format, isValid } from "date-fns";
+import { addDays, format, isAfter, isValid } from "date-fns";
+import { useGoogleOneTapLogin } from "react-google-one-tap-login";
 
 export default function App() {
   const [data, setData] = useState(null);
-  const [calendarData, setCalendarData] = useState({});
+  // const [calendarData, setCalendarData] = useState({});
   const [showDeclined, setShowDeclined] = useState(false);
+  const [auth, setAuth] = useState(null);
 
-  const fetchData = useCallback(async (accessToken) => {
-    try {
-      const { data } = await axios.get(
-        "https://www.googleapis.com/calendar/v3/users/me/calendarList",
-        {
-          headers: {
-            Authorization: "Bearer " + accessToken,
-          },
-        }
-      );
-      setCalendarData({ accessToken: data });
-    } catch (e) {}
-  }, []);
+  // const fetchData = useCallback(async (accessToken) => {
+  //   try {
+  //     const { data } = await axios.get(
+  //       "https://www.googleapis.com/calendar/v3/users/me/calendarList",
+  //       {
+  //         headers: {
+  //           Authorization: "Bearer " + accessToken,
+  //         },
+  //       }
+  //     );
+  //     setCalendarData({ accessToken: data });
+  //   } catch (e) {}
+  // }, []);
 
   const fetchCalendarData = useCallback(async (accessToken) => {
     try {
@@ -37,18 +39,31 @@ export default function App() {
           },
         }
       );
-      setData(
+      setData((d) =>
         data.items.reduce((acc, curr) => {
           const date = format(new Date(curr.start.dateTime), "MM/dd/yy");
           acc[date] = {
             label: date,
-            items: [...(acc[date]?.items ?? []), curr],
+            items: [
+              ...(acc[date]?.items ?? []),
+              curr,
+              ...(d?.[date]?.items ?? []),
+            ]
+              .filter(
+                (value, index, self) =>
+                  self.findIndex(({ id }) => id === value.id) === index
+              )
+              .sort((a, b) =>
+                isAfter(new Date(a.start.dateTime), new Date(b.start.dateTime))
+                  ? 1
+                  : -1
+              ),
           };
           return acc;
         }, {})
       );
     } catch (e) {
-      console.log(e);
+      console.error("Error in fetching events", e);
     }
   }, []);
 
@@ -57,7 +72,8 @@ export default function App() {
   // }, [fetchData]);
 
   const onSuccess = (param) => {
-    fetchData(param.accessToken);
+    setAuth(param?.tokenObj?.session_state?.extraQueryParams?.authuser ?? null);
+    // fetchData(param.accessToken);
     fetchCalendarData(param.accessToken);
   };
 
@@ -66,11 +82,20 @@ export default function App() {
   };
 
   const joinMeet = (meetingLink) => {
-    window.open(
+    const w = window.open(
       meetingLink,
       "MsgWindow",
       "width=2000,height=750,top=100,status=0,menubar=0,location=0,titlebar=0,toolbar=0"
     );
+    if (w.requestFullscreen) {
+      w.requestFullscreen();
+    } else if (w.webkitRequestFullscreen) {
+      /* Safari */
+      w.webkitRequestFullscreen();
+    } else if (w.msRequestFullscreen) {
+      /* IE11 */
+      w.msRequestFullscreen();
+    }
   };
 
   const { signIn } = useGoogleLogin({
@@ -89,6 +114,14 @@ export default function App() {
     scope: "https://www.googleapis.com/auth/calendar",
     // responseType: "code",
     // prompt: "consent",
+  });
+
+  useGoogleOneTapLogin({
+    onError: (error) => console.log(error),
+    onSuccess: (response) => console.log(response),
+    googleAccountConfigs: {
+      client_id: `452890721843-bvp31s2cq988jsiu9mlh83elp7cs8s1u.apps.googleusercontent.com`,
+    },
   });
 
   return (
@@ -136,15 +169,27 @@ export default function App() {
                     <tr key={item.id}>
                       <td>{item.summary} </td>
                       <td>
+                        &nbsp; &nbsp; &nbsp;
                         {isValid(new Date(item.start?.dateTime)) &&
                           format(
                             new Date(item.start?.dateTime),
                             "dd/MM/yy hh:mm a"
-                          )}
+                          )}{" "}
+                        -{" "}
+                        {isValid(new Date(item.end?.dateTime)) &&
+                          format(new Date(item.end?.dateTime), "hh:mm a")}
+                        &nbsp; &nbsp; &nbsp;
                       </td>
                       <td>
                         {item.hangoutLink && (
-                          <button onClick={() => joinMeet(item.hangoutLink)}>
+                          <button
+                            onClick={() =>
+                              joinMeet(
+                                item.hangoutLink +
+                                  (auth ? `?authuser=${auth}` : "")
+                              )
+                            }
+                          >
                             Join
                           </button>
                         )}
