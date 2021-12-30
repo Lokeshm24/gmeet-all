@@ -3,6 +3,7 @@ import { useGoogleLogin, useGoogleLogout } from "react-google-login";
 import { useCallback, useEffect, useState } from "react";
 import { addDays, format, isAfter, isValid } from "date-fns";
 import { useGoogleOneTapLogin } from "react-google-one-tap-login";
+import { Home } from "./components/Home";
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -29,10 +30,7 @@ export default function App() {
       const { data } = await axios.get(
         `https://www.googleapis.com/calendar/v3/calendars/primary/events?orderBy=startTime&singleEvents=true&timeMin=${new Date(
           new Date().setHours(0, 0, 0, 0)
-        ).toISOString()}&timeMax=${addDays(
-          new Date().setHours(0, 0, 0, 0),
-          4
-        ).toISOString()}`,
+        ).toISOString()}&timeMax=${addDays(new Date().setHours(0, 0, 0, 0), 4).toISOString()}`,
         {
           headers: {
             Authorization: "Bearer " + accessToken,
@@ -44,19 +42,10 @@ export default function App() {
           const date = format(new Date(curr.start.dateTime), "MM/dd/yy");
           acc[date] = {
             label: date,
-            items: [
-              ...(acc[date]?.items ?? []),
-              curr,
-              ...(d?.[date]?.items ?? []),
-            ]
-              .filter(
-                (value, index, self) =>
-                  self.findIndex(({ id }) => id === value.id) === index
-              )
+            items: [...(acc[date]?.items ?? []), curr, ...(d?.[date]?.items ?? [])]
+              .filter((value, index, self) => self.findIndex(({ id }) => id === value.id) === index)
               .sort((a, b) =>
-                isAfter(new Date(a.start.dateTime), new Date(b.start.dateTime))
-                  ? 1
-                  : -1
+                isAfter(new Date(a.start.dateTime), new Date(b.start.dateTime)) ? 1 : -1
               ),
           };
           return acc;
@@ -126,81 +115,12 @@ export default function App() {
 
   return (
     <div className="App">
-      <div style={{ display: "flex" }}>
-        <button onClick={signIn}>Login</button>
-        <label
-          style={{ display: "flex", marginLeft: "20px", cursor: "pointer" }}
-        >
-          <input
-            type="checkbox"
-            onChange={() => setShowDeclined((prev) => !prev)}
-            checked={showDeclined}
-          />
-          Show declined
-        </label>
-      </div>
-      {data &&
-        Object.values(data)?.map(({ label, items }) => (
-          <div key={label}>
-            {/* check if day doesn't only contain declined events */}
-            {(showDeclined ||
-              items.filter(
-                (item) =>
-                  !item.attendees.some(
-                    ({ self, responseStatus }) =>
-                      self && responseStatus === "declined"
-                  )
-              ).length > 0) && (
-              <h2>
-                {format(new Date(), "MM/dd/yy") === label
-                  ? "Today"
-                  : format(new Date(label), "iiii")}
-              </h2>
-            )}
-            <table>
-              <tbody>
-                {items?.map((item) =>
-                  // if showDeclined state is false then filter out declined events
-                  showDeclined ||
-                  !item.attendees.some(
-                    ({ self, responseStatus }) =>
-                      self && responseStatus === "declined"
-                  ) ? (
-                    <tr key={item.id}>
-                      <td>{item.summary} </td>
-                      <td>
-                        &nbsp; &nbsp; &nbsp;
-                        {isValid(new Date(item.start?.dateTime)) &&
-                          format(
-                            new Date(item.start?.dateTime),
-                            "dd/MM/yy hh:mm a"
-                          )}{" "}
-                        -{" "}
-                        {isValid(new Date(item.end?.dateTime)) &&
-                          format(new Date(item.end?.dateTime), "hh:mm a")}
-                        &nbsp; &nbsp; &nbsp;
-                      </td>
-                      <td>
-                        {item.hangoutLink && (
-                          <button
-                            onClick={() =>
-                              joinMeet(
-                                item.hangoutLink +
-                                  (auth ? `?authuser=${auth}` : "")
-                              )
-                            }
-                          >
-                            Join
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ) : null
-                )}
-              </tbody>
-            </table>
-          </div>
-        ))}
+      <Home
+        showDeclined={showDeclined}
+        setShowDeclined={setShowDeclined}
+        signIn={signIn}
+        data={data}
+      />
     </div>
   );
 }
