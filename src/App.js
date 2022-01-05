@@ -167,12 +167,13 @@ export default function App() {
           <button
             type="button"
             key={user.email}
-            onClick={() =>
+            onClick={() => {
               joinMeet(
                 link.split("?")?.[0] +
                   (user.auth ? `?authuser=${user.auth}` : "")
-              )
-            }
+              );
+              setLink("");
+            }}
           >
             Join {user.email}
           </button>
