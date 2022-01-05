@@ -4,11 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import { addDays, format, isAfter, isValid } from "date-fns";
 import { useGoogleOneTapLogin } from "react-google-one-tap-login";
 
+let users = [];
 export default function App() {
   const [data, setData] = useState(null);
   // const [calendarData, setCalendarData] = useState({});
   const [showDeclined, setShowDeclined] = useState(false);
-  const [auth, setAuth] = useState(null);
+  const [link, setLink] = useState("");
 
   // const fetchData = useCallback(async (accessToken) => {
   //   try {
@@ -24,7 +25,7 @@ export default function App() {
   //   } catch (e) {}
   // }, []);
 
-  const fetchCalendarData = useCallback(async (accessToken) => {
+  const fetchCalendarData = useCallback(async (auth) => {
     try {
       const { data } = await axios.get(
         `https://www.googleapis.com/calendar/v3/calendars/primary/events?orderBy=startTime&singleEvents=true&timeMin=${new Date(
@@ -35,46 +36,60 @@ export default function App() {
         ).toISOString()}`,
         {
           headers: {
-            Authorization: "Bearer " + accessToken,
+            Authorization: "Bearer " + auth.token,
           },
         }
       );
       setData((d) =>
-        data.items.reduce((acc, curr) => {
-          const date = format(new Date(curr.start.dateTime), "MM/dd/yy");
-          acc[date] = {
-            label: date,
-            items: [
-              ...(acc[date]?.items ?? []),
-              curr,
-              ...(d?.[date]?.items ?? []),
-            ]
-              .filter(
-                (value, index, self) =>
-                  self.findIndex(({ id }) => id === value.id) === index
-              )
-              .sort((a, b) =>
-                isAfter(new Date(a.start.dateTime), new Date(b.start.dateTime))
-                  ? 1
-                  : -1
-              ),
-          };
-          return acc;
-        }, {})
+        data.items
+          .map((item) => ({ ...item, ...auth }))
+          .reduce((acc, curr) => {
+            const date = format(new Date(curr.start.dateTime), "MM/dd/yy");
+            acc[date] = {
+              label: date,
+              items: [
+                ...(acc[date]?.items ?? []),
+                curr,
+                ...(d?.[date]?.items ?? []),
+              ]
+                .filter(
+                  (value, index, self) =>
+                    self.findIndex(({ id }) => id === value.id) === index
+                )
+                .sort((a, b) =>
+                  isAfter(
+                    new Date(a.start.dateTime),
+                    new Date(b.start.dateTime)
+                  )
+                    ? 1
+                    : -1
+                ),
+            };
+            return acc;
+          }, {})
       );
     } catch (e) {
       console.error("Error in fetching events", e);
     }
   }, []);
 
-  // useEffect(() => {
-  //   fetchData();
-  // }, [fetchData]);
-
   const onSuccess = (param) => {
-    setAuth(param?.tokenObj?.session_state?.extraQueryParams?.authuser ?? null);
     // fetchData(param.accessToken);
-    fetchCalendarData(param.accessToken);
+    const token = localStorage.getItem("accessToken");
+    const accessToken = token ? JSON.parse(token) : [];
+
+    const authObj = {
+      token: param.accessToken,
+      email: param?.profileObj?.email,
+      auth: param?.tokenObj?.session_state?.extraQueryParams?.authuser,
+    };
+
+    const authArr = [authObj, ...accessToken];
+    users = authArr;
+
+    localStorage.setItem("accessToken", JSON.stringify(authArr));
+
+    fetchCalendarData(authObj);
   };
 
   const onFailure = (param) => {
@@ -98,11 +113,18 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    const accessToken = token ? JSON.parse(token) : [];
+    accessToken.forEach(fetchCalendarData);
+    users = accessToken;
+  }, []);
+
   const { signIn } = useGoogleLogin({
     onSuccess,
     onFailure,
     clientId: `452890721843-bvp31s2cq988jsiu9mlh83elp7cs8s1u.apps.googleusercontent.com`,
-    isSignedIn: true,
+    isSignedIn: false,
     accessType: "online",
     // discoveryDocs: [
     //   "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
@@ -128,16 +150,33 @@ export default function App() {
     <div className="App">
       <div style={{ display: "flex" }}>
         <button onClick={signIn}>Login</button>
-        <label
-          style={{ display: "flex", marginLeft: "20px", cursor: "pointer" }}
-        >
+        <label style={{ display: "flex", margin: "0 20px", cursor: "pointer" }}>
           <input
             type="checkbox"
-            onChange={() => setShowDeclined((prev) => !prev)}
             checked={showDeclined}
+            onChange={() => setShowDeclined((prev) => !prev)}
           />
           Show declined
         </label>
+        <input
+          value={link}
+          placeholder="Enter Meet Link"
+          onChange={(e) => setLink(e.target.value)}
+        />
+        {users.map((user) => (
+          <button
+            type="button"
+            key={user.email}
+            onClick={() =>
+              joinMeet(
+                link.split("?")?.[0] +
+                  (user.auth ? `?authuser=${user.auth}` : "")
+              )
+            }
+          >
+            Join {user.email}
+          </button>
+        ))}
       </div>
       {data &&
         Object.values(data)?.map(({ label, items }) => (
@@ -186,7 +225,7 @@ export default function App() {
                             onClick={() =>
                               joinMeet(
                                 item.hangoutLink +
-                                  (auth ? `?authuser=${auth}` : "")
+                                  (item.auth ? `?authuser=${item.auth}` : "")
                               )
                             }
                           >
