@@ -178,6 +178,24 @@ export default function App() {
           </button>
         ))}
       </div>
+      <div>
+        <h2>New Meeting</h2>
+        {users.map((user) => (
+          <div key={user.email} style={{ marginBottom: "10px" }}>
+            <button
+              onClick={() =>
+                joinMeet(
+                  `https://meet.google.com/new${
+                    user.auth ? `?authuser=${user.auth}` : ""
+                  }`
+                )
+              }
+            >
+              {user.email}
+            </button>
+          </div>
+        ))}
+      </div>
       {data &&
         Object.values(data)?.map(({ label, items }) => (
           <div key={label}>
