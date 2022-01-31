@@ -1,5 +1,6 @@
 import axios from "axios";
-import { useGoogleLogin, useGoogleLogout } from "react-google-login";
+import uniqBy from "lodash/uniqBy";
+import { useGoogleLogin } from "react-google-login";
 import { useCallback, useEffect, useState } from "react";
 import { addDays, format, isAfter, isValid } from "date-fns";
 import { useGoogleOneTapLogin } from "react-google-one-tap-login";
@@ -84,7 +85,7 @@ export default function App() {
       auth: param?.tokenObj?.session_state?.extraQueryParams?.authuser,
     };
 
-    const authArr = [authObj, ...accessToken];
+    const authArr = uniqBy([authObj, ...accessToken], "email");
     users = authArr;
 
     localStorage.setItem("accessToken", JSON.stringify(authArr));
@@ -124,7 +125,7 @@ export default function App() {
     onSuccess,
     onFailure,
     clientId: `452890721843-bvp31s2cq988jsiu9mlh83elp7cs8s1u.apps.googleusercontent.com`,
-    isSignedIn: false,
+    isSignedIn: true,
     accessType: "online",
     // discoveryDocs: [
     //   "https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest",
@@ -143,6 +144,7 @@ export default function App() {
     onSuccess: (response) => console.log(response),
     googleAccountConfigs: {
       client_id: `452890721843-bvp31s2cq988jsiu9mlh83elp7cs8s1u.apps.googleusercontent.com`,
+      scope: "https://www.googleapis.com/auth/calendar",
     },
   });
 
