@@ -41,6 +41,7 @@ export default function App() {
           },
         }
       );
+
       setData((d) =>
         data.items
           .map((item) => ({ ...item, ...auth }))
